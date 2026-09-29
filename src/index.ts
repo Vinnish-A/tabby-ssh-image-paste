@@ -24,6 +24,15 @@ import { ClipboardSyncService } from './clipboard-sync.service'
 })
 export default class ClipboardSyncModule implements OnDestroy {
     private subscriptions: Subscription[] = []
+    private imageKeydown = (event: KeyboardEvent): void => {
+        if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'v') return
+        this.checkAndSetActiveSession(this.app.activeTab, false)
+        if (!this.clipboardSync.canPasteImage()) return
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        if (!event.repeat) void this.clipboardSync.pasteImage()
+    }
+
 
     constructor(
         private clipboardSync: ClipboardSyncService,
@@ -32,6 +41,7 @@ export default class ClipboardSyncModule implements OnDestroy {
     ) {
         this.initializeTabWatcher()
         this.initializePasteHook()
+        document.addEventListener('keydown', this.imageKeydown, true)
     }
 
     private initializePasteHook(): void {
@@ -167,6 +177,7 @@ export default class ClipboardSyncModule implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        document.removeEventListener('keydown', this.imageKeydown, true)
         this.subscriptions.forEach(sub => sub.unsubscribe())
     }
 }

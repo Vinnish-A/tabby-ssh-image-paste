@@ -2,6 +2,7 @@ import { Component } from '@angular/core'
 import { ConfigService } from 'tabby-core'
 
 interface ClipboardSyncConfig {
+    autoUpdate: boolean
     enabled: boolean
     showNotifications: boolean
 }
@@ -12,7 +13,7 @@ interface ClipboardSyncConfig {
         <div class="form-group">
             <h3>SSH Image Paste</h3>
             <small class="form-text text-muted">
-                Use Tabby’s Paste shortcut (Ctrl+Shift+V on Windows) to upload a clipboard image
+                Press Ctrl+V or Ctrl+Shift+V in an SSH terminal to upload a clipboard image
             </small>
         </div>
 
@@ -29,6 +30,13 @@ interface ClipboardSyncConfig {
                     Enable clipboard sync
                 </label>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label><input type="checkbox" [(ngModel)]="config.autoUpdate" (ngModelChange)="save()" />
+                Automatically update from GitHub on startup (at most once a day)
+            </label>
+            <small class="form-text text-muted">Updates apply to newly opened windows. Existing SSH sessions are not restarted.</small>
         </div>
 
         <div class="form-group">
@@ -51,11 +59,12 @@ export class ClipboardSyncSettingsTabComponent {
     config: ClipboardSyncConfig
 
     constructor(private configService: ConfigService) {
-        this.config = this.configService.store.clipboardSync || this.getDefaultConfig()
+        this.config = { ...this.getDefaultConfig(), ...this.configService.store.clipboardSync }
     }
 
     private getDefaultConfig(): ClipboardSyncConfig {
         return {
+            autoUpdate: true,
             enabled: true,
             showNotifications: true,
         }

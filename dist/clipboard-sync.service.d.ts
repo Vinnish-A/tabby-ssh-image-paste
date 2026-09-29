@@ -27,6 +27,7 @@ export declare class ClipboardSyncService {
     setActiveSession(session: SSHSession, tab: any): void;
     clearActiveSession(): void;
     hasActiveSession(): boolean;
+    canPasteImage(): boolean;
     /**
      * Handle Ctrl+Shift+V - paste image from clipboard
      * Returns true if handled (image or text pasted)

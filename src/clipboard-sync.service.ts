@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core'
 import { Subject } from 'rxjs'
 import { ConfigService, NotificationsService } from 'tabby-core'
+import { checkForUpdate } from './update'
 import { ClipboardSyncConfig, DEFAULT_CONFIG } from './models/config.interface'
 
 // Get Electron clipboard
@@ -36,6 +37,11 @@ export class ClipboardSyncService {
         const store = this.configService.store
         this.config = store?.clipboardSync ?? { ...DEFAULT_CONFIG }
 
+        if (this.config.autoUpdate !== false) {
+            void checkForUpdate(message => this.notifications.info(message))
+                .catch(error => console.warn('SSH Image Paste update check:', String(error)))
+        }
+
         this.configService.changed$.subscribe(() => {
             this.config = this.configService.store?.clipboardSync ?? { ...DEFAULT_CONFIG }
         })
@@ -58,12 +64,17 @@ export class ClipboardSyncService {
         return this.activeContext !== null
     }
 
+    canPasteImage(): boolean {
+        return this.config.enabled && this.activeContext !== null && !clipboard.readImage().isEmpty()
+    }
+
     /**
      * Handle Ctrl+Shift+V - paste image from clipboard
      * Returns true if handled (image or text pasted)
      */
     async pasteImage(): Promise<boolean> {
-        if (!this.activeContext) {
+        const context = this.activeContext
+        if (!context) {
 
             return false
         }
@@ -86,10 +97,10 @@ export class ClipboardSyncService {
             const imageData = image.toPNG()
 
             // Send image to server
-            const filePath = await this.sendImageToServer(imageData)
+            const filePath = await this.sendImageToServer(context, imageData)
             
             // Input file path to terminal
-            await this.inputToTerminal(filePath)
+            await this.inputToTerminal(context.tab, filePath)
             
             this.imagePasted$.next({ path: filePath })
             
@@ -102,12 +113,12 @@ export class ClipboardSyncService {
         } catch (error) {
 
             this.error$.next({ message: String(error) })
+            this.notifications.error(`Image upload failed: ${String(error)}`)
             return false
         }
     }
 
-    private async sendImageToServer(imageData: Buffer): Promise<string> {
-        const context = this.activeContext!
+    private async sendImageToServer(context: SessionContext, imageData: Buffer): Promise<string> {
         const timestamp = Date.now()
         const filename = `/tmp/clipboard_${timestamp}.png`
 
@@ -142,31 +153,32 @@ export class ClipboardSyncService {
         const OPEN_TRUNCATE = 0x10
         const handle = await sftp.open(remotePath, OPEN_WRITE | OPEN_CREATE | OPEN_TRUNCATE)
         
-        await handle.write(new Uint8Array(data))
-        await handle.close()
+        try {
+            await handle.write(new Uint8Array(data))
+        } finally {
+            await handle.close()
+        }
     }
 
-    private async inputToTerminal(filePath: string): Promise<void> {
-        const tab = this.activeContext!.tab
+    private async inputToTerminal(tab: any, filePath: string): Promise<void> {
         // Just input the file path (user can use it with Claude Code / OpenCode)
         // Wrap in quotes to prevent shell interpretation of slashes
-        await this.writeToTerminal(tab, `"${filePath}"`)
+        let text = `"${filePath}"`
+        if (tab.frontend?.supportsBracketedPaste?.()) {
+            text = `\x1b[200~${text}\x1b[201~`
+        }
+        await this.writeToTerminal(tab, text)
     }
 
     private async writeToTerminal(tab: any, text: string): Promise<void> {
         // Try multiple methods to write to terminal
-        // Priority: sendInput (terminal input) > frontend.write > session.write
+        // Write to the SSH input, never to the local display.
         
         if (tab.sendInput) {
             tab.sendInput(text)
             return
         }
         
-        if (tab.frontend?.write) {
-            tab.frontend.write(text)
-            return
-        }
-
         const session = tab.session || tab.sshSession
         if (session?.write) {
             const data = Buffer.from(text, 'utf8')

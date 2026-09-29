@@ -1,6 +1,6 @@
 # Tabby SSH Image Paste
 
-在 Windows 的 Tabby 中复制截图，按 `Ctrl+Shift+V`，把图片上传到当前 SSH 连接的服务器，并将图片路径填入终端。配合 [codex24h](https://github.com/Vinnish-A/codex24h)，可以直接给远程 Codex 发图片。
+在 Windows 的 Tabby 中复制截图，按 `Ctrl+V` 或 `Ctrl+Shift+V`，把图片上传到当前 SSH 连接的服务器，并将图片路径填入终端。配合 [codex24h](https://github.com/Vinnish-A/codex24h)，可以直接给远程 Codex 发图片。
 
 基于 [CoderRed 的 tabby-ssh-image-clipboard](https://github.com/coderredlab/tabby-ssh-image-clipboard)，保留 MIT 许可和原作者署名。本版修复首次打开 SSH 标签页时图片粘贴没有反应的问题。
 
@@ -8,32 +8,30 @@
 
 插件名：**`tabby-ssh-image-paste`**；设置页名称：**SSH Image Paste**。
 
-此版本尚未发布到 npm / Tabby 插件商店，请从本仓库安装：
+当前版本：**0.1.3**。尚未上架 npm / Tabby 插件商店。
 
-1. [下载 ZIP](https://github.com/Vinnish-A/tabby-ssh-image-paste/archive/refs/heads/main.zip)，解压。
-2. 在文件资源管理器地址栏输入 `%APPDATA%\tabby\plugins\node_modules`。目录不存在时自行创建。
-3. 将解压出的 `tabby-ssh-image-paste-main` 文件夹改名为 `tabby-ssh-image-paste`，放入上述目录。
-4. 完全退出并重新打开 Tabby。
+1. [下载 ZIP](https://github.com/Vinnish-A/tabby-ssh-image-paste/archive/refs/heads/main.zip)，完整解压。
+2. 双击 `install.cmd`，看到 `Installed tabby-ssh-image-paste 0.1.3` 即安装成功。
+3. 保存工作，完全退出并重新打开 Tabby。
 
-最终应能找到：
+不需要管理员权限、Node.js，也不用自己打开 PowerShell 或输入命令。安装器会调用 Windows 自带的 PowerShell；如果系统策略禁止运行脚本，需要管理员处理该策略。旧版图片插件会移到 `%APPDATA%\tabby\plugins\backups`，其他插件不受影响。
 
-```text
-%APPDATA%\tabby\plugins\node_modules\tabby-ssh-image-paste\package.json
-%APPDATA%\tabby\plugins\node_modules\tabby-ssh-image-paste\dist\index.js
-```
+## 自动更新
 
-仓库包含编译结果，不需要 Node.js、PowerShell 脚本或自行编译。如果装过原版 `tabby-ssh-image-clipboard`，先在 Tabby 插件管理中卸载原版，避免两份插件同时处理粘贴。升级本版时，退出 Tabby 后替换本插件文件夹即可。
+默认开启：Tabby 启动时后台检查 GitHub，成功检查后 24 小时内不重复检查。发现新版本会下载对应 Git tag 的文件，校验 SHA-256 后安装，并提示重新打开 Tabby。不会主动重启或断开 SSH；已打开的窗口继续运行原版本。
+
+可在 **SSH Image Paste → Automatically update from GitHub** 关闭。无法连接 GitHub 时继续使用已安装版本，也可以重新下载 ZIP、双击安装来升级。插件代码安装在 `%APPDATA%\tabby\plugins\local-plugins\tabby-ssh-image-paste`，通过目录联接加载。
 
 ## 使用
 
-1. 在 Tabby 中连接 Linux / WSL 的 SSH 服务，启动 `codex24h`。
+1. 在 Tabby 的“配置和连接”中选择原生 SSH 连接，连接 Linux / WSL 并启动 `codex24h`。在 PowerShell / WSL 标签页中手动运行 `ssh` 不提供插件所需的 SFTP 会话，不能用本插件上传。
 2. 截图或复制图片本身到 Windows 剪贴板。
-3. 在远程终端按 `Ctrl+Shift+V`（若改过快捷键，使用 Tabby 的“粘贴”快捷键）。
+3. 在远程终端按 `Ctrl+V` 或 `Ctrl+Shift+V`（若改过快捷键，使用 Tabby 的“粘贴”快捷键）。
 4. 图片上传后，Codex 输入框会识别图片附件；输入问题后发送。
 
 上传使用当前 SSH 连接的 SFTP，无需额外账号、服务端插件或重新登录 Codex。服务器需要支持 SFTP，且 `/tmp` 可写。文件保存为 `/tmp/clipboard_<时间戳>.png`，本插件不负责自动删除。
 
-只复制文件名或资源管理器中的文件不等于复制图片内容。没有图片时仍由 Tabby 处理普通文本粘贴；此插件不会阻止 Tabby 自身的粘贴处理，剪贴板同时有图片和文本时也可能出现文本。
+只复制文件名或资源管理器中的文件不等于复制图片内容。有图片且焦点位于原生 SSH 标签页时，Ctrl+V / Ctrl+Shift+V 上传图片并阻止同一次按键的文字粘贴；没有图片时保留原来的按键行为。自定义“粘贴”快捷键仍可使用，但 Tabby 也可能同时粘贴剪贴板中的文字。上传失败会显示错误提示。
 
 ## 验证范围
 
@@ -48,7 +46,7 @@ npm ci
 npm run build
 ```
 
-更新源码后请一并提交 `dist/`，以便下载 ZIP 的用户直接安装。
+更新源码后请一并提交 `dist/` 和构建生成的 `update.json`。发布时将版本对应的 `v版本号` tag 与 main 一起推送；自动更新从该 tag 获取文件，不要修改已发布的 tag。
 
 ## 版权
 

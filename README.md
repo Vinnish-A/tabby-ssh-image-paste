@@ -8,7 +8,7 @@
 
 插件名：**`tabby-ssh-image-paste`**；设置页名称：**SSH Image Paste**。
 
-当前版本：**0.1.5**。尚未上架 npm / Tabby 插件商店。
+当前版本：**0.1.6**。尚未上架 npm / Tabby 插件商店。
 
 1. [下载 install.cmd](https://raw.githubusercontent.com/Vinnish-A/tabby-ssh-image-paste/main/install.cmd)，保存到电脑上（不要保存为 `.txt`）。
 2. 双击脚本，它会从 GitHub 下载已发布版本并安装；看到 `Installed tabby-ssh-image-paste ...` 即成功。
@@ -27,13 +27,15 @@
 3. 在远程终端按 `Ctrl+V` 或 `Ctrl+Shift+V`（若改过快捷键，使用 Tabby 的“粘贴”快捷键）。
 4. 图片上传后，Codex 输入框会识别图片附件；输入问题后发送。
 
-上传使用当前 SSH 连接的 SFTP，无需额外账号、服务端插件或重新登录 Codex。服务器需要支持 SFTP，且 `/tmp` 可写。文件保存为 `/tmp/clipboard_<UUID>.png`，本插件不负责自动删除。
+上传使用当前 SSH 连接的 SFTP，无需额外账号、服务端插件或重新登录 Codex。服务器需要支持 SFTP，且 `/tmp` 可写。文件保存为 `/tmp/clipboard_<UUID>.png`，成功送入 Codex 的图片会保留供其读取；粘贴在送入输入框前失败时，会尝试清理本次上传的临时文件，断线导致清理失败时可能有残留。
 
-整段图文按 HTML 中的文字、图片顺序插入，保留段落和换行，支持多张图片。图片先上传完，再依次送入 Codex；任何一张读取或上传失败都会提示，输入框不会被部分填入。使用 `Ctrl+V` / `Ctrl+Shift+V`；纯文字仍交给 Tabby。
+整段图文按 HTML 中的文字、图片顺序插入，保留段落和换行，支持多张图片。图片先上传完，再依次送入 Codex；任何一张读取或上传失败都会提示，输入框不会被部分填入。使用 `Ctrl+V` / `Ctrl+Shift+V`、右键菜单中的粘贴或自定义粘贴快捷键；纯文字仍交给 Tabby，不重复插入。
 
 支持 HTML 内嵌图片、公开 HTTP(S) 图片及可读取的本地 `file:` 图片。需登录才能读取的链接、其他应用私有的 `blob:` 图片、只有 RTF 而没有 HTML/位图的剪贴板尚不支持；此时需要复制原图片。没有 HTML 顺序信息、仅同时提供文字和位图时，按“文字、图片”插入。不会执行 HTML 脚本，也不会向图片网站发送浏览器登录 cookie。
 
 只复制文件名或资源管理器中的文件不等于复制图片内容。终端需支持 bracketed paste，建议在 Codex 输入框中粘贴整段图文。
+
+右键菜单与右键粘贴行为仍由 Tabby 设置决定。插件只在 SSH 标签页隐藏 `Export to file`（原本是保存到 Windows 本机），不绑定右键快捷动作。设置页和搜索框中的 Ctrl+V 不触发图片上传。
 
 ## 验证范围
 
@@ -50,7 +52,7 @@ npm run build
 
 更新源码后请一并提交 `dist/`。发布时将 package.json 对应的 `v版本号` tag 与 main 一起推送；安装脚本从该 tag 获取文件，不要修改已发布的 tag。
 
-`node tests/paste.cjs` 验证粘贴顺序、剪贴板快照、上传失败和原标签页输入。`tests/rich.cjs` 在 Tabby renderer 中运行，使用真实 DOM 和 Electron 图片解码器验证图文解析。
+`node tests/ssh-terminal.cjs` 验证原生粘贴入口和 SSH 菜单过滤；`node tests/paste.cjs` 验证粘贴顺序、剪贴板快照、上传失败和原标签页输入。`tests/rich.cjs` 在 Tabby renderer 中运行，使用真实 DOM 和 Electron 图片解码器验证图文解析。
 
 ## 版权
 

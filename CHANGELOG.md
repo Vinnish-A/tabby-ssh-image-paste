@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- Route context-menu and custom-hotkey pastes through Tabby’s own paste method, avoiding duplicate text; image shortcut capture is limited to the terminal.
+- Hide Export to file in SSH tab menus while retaining the client’s right-click behavior.
+- Clean up this paste’s temporary uploads on failure before any content is sent to the terminal.
+
 ## 0.1.5
 
 - Paste mixed HTML text and multiple images in document order, retaining paragraphs and separate Codex image attachments; show failures without partially inserting the document.

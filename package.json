@@ -1,6 +1,6 @@
 {
   "name": "tabby-ssh-image-paste",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Paste clipboard images to remote SSH servers via SFTP for Tabby terminal",
   "keywords": [
     "tabby-plugin",

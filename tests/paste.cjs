@@ -29,7 +29,8 @@ async function main () {
     const errors = []
     const service = new Service({ store: {}, changed$: new Subject() }, { info () {}, error: x => errors.push(x) })
     const sent = [], other = []
-    const tab = { frontend: { supportsBracketedPaste: () => true }, sendInput: x => sent.push(x) }
+    const removed = []
+    const tab = { sshSession: { openSFTP: async () => ({ unlink: async path => removed.push(path) }) }, frontend: { supportsBracketedPaste: () => true }, sendInput: x => sent.push(x) }
     service.setActiveSession({}, tab)
     let finish
     service.sendViaSFTP = () => new Promise(resolve => { finish = resolve })
@@ -39,6 +40,7 @@ async function main () {
     assert.equal(await pending, true)
     assert.match(sent[0], /^\x1b\[200~"\/tmp\/clipboard_[a-f0-9-]+\.png"\x1b\[201~$/)
     assert.deepEqual(other, [], 'focus change must not route the path into another server')
+    service.setActiveSession({}, tab)
     service.sendViaSFTP = async () => { throw new Error('SFTP permission denied') }
     assert.equal(await service.pasteImage(), false)
     assert.match(errors[0], /SFTP permission denied/)
@@ -60,10 +62,12 @@ async function main () {
     assert.deepEqual(events, ['before\n', `"${uploads[0].path}"`, '\nbetween\n', `"${uploads[1].path}"`, '\nafter'])
     sent.length = 0
     rich = [{ png: Buffer.from('one') }, { png: Buffer.from('two') }]
+    removed.length = 0
     let count = 0
     service.sendViaSFTP = async () => { if (++count === 2) throw new Error('second image failed') }
     assert.equal(await service.pasteImage(), false)
     assert.deepEqual(sent, [], 'a failed document must not be partly inserted')
+    assert.equal(removed.length, 2, 'failed multi-image paste cleans only its own temporary files')
     console.log('PASS: mixed order, newlines, clipboard snapshot, unique paths, no partial paste')
     console.log('PASS: bracketed paste, original destination, visible upload errors, text-only passthrough')
 }

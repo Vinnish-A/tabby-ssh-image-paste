@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common'
 import { NgModule, OnDestroy } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { ConfigProvider, AppService, BaseTabComponent, HotkeysService } from 'tabby-core'
+import { ConfigProvider, AppService, BaseTabComponent } from 'tabby-core'
 import { SettingsTabProvider } from 'tabby-settings'
+import { TerminalDecorator } from 'tabby-terminal'
+import { SSHTerminalDecorator } from './ssh-terminal'
 import { Subscription } from 'rxjs'
 import { ClipboardSyncConfigProvider } from './providers/config.provider'
 import { ClipboardSyncSettingsTabComponent, ClipboardSyncSettingsTabProvider } from './settings'
@@ -19,12 +21,14 @@ import { ClipboardSyncService } from './clipboard-sync.service'
     providers: [
         { provide: ConfigProvider, useClass: ClipboardSyncConfigProvider, multi: true },
         { provide: SettingsTabProvider, useClass: ClipboardSyncSettingsTabProvider, multi: true },
+        { provide: TerminalDecorator, useClass: SSHTerminalDecorator, multi: true },
         ClipboardSyncService,
     ],
 })
 export default class ClipboardSyncModule implements OnDestroy {
     private subscriptions: Subscription[] = []
     private imageKeydown = (event: KeyboardEvent): void => {
+        if (!(event.target instanceof Element) || !event.target.closest('.xterm')) return
         if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'v') return
         this.checkAndSetActiveSession(this.app.activeTab, false)
         if (!this.clipboardSync.canPasteImage()) return
@@ -37,22 +41,9 @@ export default class ClipboardSyncModule implements OnDestroy {
     constructor(
         private clipboardSync: ClipboardSyncService,
         private app: AppService,
-        private hotkeys: HotkeysService,
     ) {
         this.initializeTabWatcher()
-        this.initializePasteHook()
         document.addEventListener('keydown', this.imageKeydown, true)
-    }
-
-    private initializePasteHook(): void {
-        // Refresh on paste: the first SSH child may become ready after tab events.
-        const sub = this.hotkeys.hotkey$.subscribe(async hotkey => {
-            if (hotkey === 'paste') {
-                this.checkAndSetActiveSession(this.app.activeTab, false)
-                await this.clipboardSync.pasteImage()
-            }
-        })
-        this.subscriptions.push(sub)
     }
 
     private initializeTabWatcher(): void {

@@ -75,10 +75,11 @@ export class ClipboardSyncService {
         if (!parts.length) return false
         if (this.pasting) return true
         this.pasting = true
+        const paths: string[] = []
+        let inputStarted = false
         try {
             const bracketed = context.tab.frontend?.supportsBracketedPaste?.()
             if (parts.length > 1 && !bracketed) throw new Error('Mixed image/text paste requires bracketed paste. Open the Codex input first.')
-            const paths: string[] = []
             const chunks: string[] = []
             // Finish every upload before changing the input; a failed image must
             // not silently leave a partially pasted document in the composer.
@@ -89,19 +90,26 @@ export class ClipboardSyncService {
                 } else {
                     const data = 'png' in part ? part.png : await imagePNG(part.source, nativeImage)
                     const path = `/tmp/clipboard_${randomUUID()}.png`
-                    await this.sendViaSFTP(context.tab, data, path)
                     paths.push(path)
+                    await this.sendViaSFTP(context.tab, data, path)
                     text = `"${path}"`
                 }
                 // Separate paste events let Codex recognize each image path as
                 // an attachment while retaining text before and after it.
                 chunks.push(bracketed ? `\x1b[200~${text}\x1b[201~` : text)
             }
+            inputStarted = true
             await this.writeToTerminal(context.tab, chunks.join(''))
             for (const path of paths) this.imagePasted$.next({ path })
             if (this.config.showNotifications) this.notifications.info(`${paths.length} image(s) pasted`)
             return true
         } catch (error) {
+            if (!inputStarted && paths.length) {
+                try {
+                    const sftp = await context.tab.sshSession.openSFTP()
+                    await Promise.all(paths.map(path => sftp.unlink(path).catch((e: Error) => console.warn('Image cleanup:', String(e)))))
+                } catch (cleanup) { console.warn('Image cleanup:', String(cleanup)) }
+            }
             this.error$.next({ message: String(error) })
             this.notifications.error(`Image paste failed: ${String(error)}`)
             return false

@@ -35,14 +35,11 @@ export default class ClipboardSyncModule implements OnDestroy {
     }
 
     private initializePasteHook(): void {
-        // Intercept Ctrl+Shift+V (paste) - if clipboard has image, handle it; otherwise let Tabby do normal paste
+        // Refresh on paste: the first SSH child may become ready after tab events.
         const sub = this.hotkeys.hotkey$.subscribe(async hotkey => {
             if (hotkey === 'paste') {
-                const handled = await this.clipboardSync.pasteImage()
-                // If not handled (no image), Tabby's default paste will proceed
-                if (handled) {
-                    // Prevent default paste by not propagating
-                }
+                this.checkAndSetActiveSession(this.app.activeTab, false)
+                await this.clipboardSync.pasteImage()
             }
         })
         this.subscriptions.push(sub)
@@ -105,7 +102,7 @@ export default class ClipboardSyncModule implements OnDestroy {
         }
     }
 
-    private checkAndSetActiveSession(tab: BaseTabComponent): void {
+    private checkAndSetActiveSession(tab: BaseTabComponent | null, watch = true): void {
         if (!tab) {
             this.clipboardSync.clearActiveSession()
             return
@@ -120,7 +117,7 @@ export default class ClipboardSyncModule implements OnDestroy {
             const allTabs = tabAny.getAllTabs?.()
 
             // Watch for focus changes within SplitTabComponent
-            if (tabAny.focusChanged$) {
+            if (watch && tabAny.focusChanged$) {
                 const sub = tabAny.focusChanged$.subscribe((focused: BaseTabComponent) => {
                     if (focused) {
                         this.checkAndSetActiveSession(focused)
@@ -131,10 +128,11 @@ export default class ClipboardSyncModule implements OnDestroy {
 
             const childTab = focusedTab || allTabs?.[0]
             if (childTab) {
-                this.checkAndSetActiveSession(childTab)
+                this.checkAndSetActiveSession(childTab, watch)
             } else {
+                this.clipboardSync.clearActiveSession()
                 // Child tabs not ready yet - wait for initialized$
-                if (tabAny.initialized$) {
+                if (watch && tabAny.initialized$) {
                     const sub = tabAny.initialized$.subscribe(() => {
                         const child = tabAny.getFocusedTab?.() || tabAny.getAllTabs?.()?.[0]
                         if (child) {
@@ -144,7 +142,7 @@ export default class ClipboardSyncModule implements OnDestroy {
                     this.subscriptions.push(sub)
                 }
 
-                if (tabAny.tabAdded$) {
+                if (watch && tabAny.tabAdded$) {
                     const sub = tabAny.tabAdded$.subscribe((added: BaseTabComponent) => {
                         this.checkAndSetActiveSession(added)
                     })
@@ -161,7 +159,8 @@ export default class ClipboardSyncModule implements OnDestroy {
         if (isSSHTab && tabAny.sshSession) {
             this.clipboardSync.setActiveSession(tabAny.sshSession, tabAny)
         } else if (isSSHTab && !tabAny.sshSession) {
-            this.watchTabForSession(tab)
+            this.clipboardSync.clearActiveSession()
+            if (watch) this.watchTabForSession(tab)
         } else {
             this.clipboardSync.clearActiveSession()
         }

@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Prebuilt dist is tracked for installation from GitHub ZIP.
 
 # IDE
 .idea/
@@ -21,3 +20,5 @@ npm-debug.log*
 # Claude Code
 CLAUDE.md
 SESSION_SUMMARY.md
+
+AGENTS.md

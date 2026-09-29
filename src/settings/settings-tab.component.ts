@@ -10,9 +10,9 @@ interface ClipboardSyncConfig {
     selector: 'clipboard-sync-settings',
     template: `
         <div class="form-group">
-            <h3>Clipboard Sync</h3>
+            <h3>SSH Image Paste</h3>
             <small class="form-text text-muted">
-                Press Ctrl+Alt+V (Cmd+Alt+V on Mac) to paste clipboard image to remote server
+                Use Tabby’s Paste shortcut (Ctrl+Shift+V on Windows) to upload a clipboard image
             </small>
         </div>
 

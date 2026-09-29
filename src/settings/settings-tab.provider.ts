@@ -6,7 +6,7 @@ import { ClipboardSyncSettingsTabComponent } from './settings-tab.component'
 export class ClipboardSyncSettingsTabProvider extends SettingsTabProvider {
     id = 'clipboard-sync'
     icon = 'clipboard'
-    title = 'Clipboard Sync'
+    title = 'SSH Image Paste'
     component = ClipboardSyncSettingsTabComponent
 
     getComponentType(): typeof ClipboardSyncSettingsTabComponent {

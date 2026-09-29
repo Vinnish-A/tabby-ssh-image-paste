@@ -1,6 +1,6 @@
 {
-  "name": "tabby-ssh-image-clipboard",
-  "version": "0.1.0",
+  "name": "tabby-ssh-image-paste",
+  "version": "0.1.1",
   "description": "Paste clipboard images to remote SSH servers via SFTP for Tabby terminal",
   "keywords": [
     "tabby-plugin",
@@ -17,11 +17,11 @@
   "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coderredlab/tabby-ssh-image-clipboard.git"
+    "url": "git+https://github.com/Vinnish-A/tabby-ssh-image-paste.git"
   },
-  "homepage": "https://coderred.com",
+  "homepage": "https://github.com/Vinnish-A/tabby-ssh-image-paste#readme",
   "bugs": {
-    "url": "https://github.com/coderredlab/tabby-ssh-image-clipboard/issues"
+    "url": "https://github.com/Vinnish-A/tabby-ssh-image-paste/issues"
   },
   "author": "CoderRed",
   "scripts": {
@@ -53,5 +53,8 @@
     "typescript": "~4.9.0",
     "webpack": "^5.76.0",
     "webpack-cli": "^5.0.0"
-  }
+  },
+  "contributors": [
+    "Vinnish-A"
+  ]
 }

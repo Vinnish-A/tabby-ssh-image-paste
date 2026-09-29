@@ -1,3 +1,5 @@
+> This is the original upstream documentation. For this fork’s installation instructions, see [README.md](README.md).
+
 # Tabby SSH Image Clipboard
 
 [![npm version](https://badge.fury.io/js/tabby-ssh-image-clipboard.svg)](https://www.npmjs.com/package/tabby-ssh-image-clipboard)

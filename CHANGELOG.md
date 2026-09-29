@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8
+
+- Consume paste keypress events as well as keydown/keyup. Windows clipboard reads can dispatch keypress reentrantly, causing Tabby to paste a second time despite the keydown handler; a regression now reproduces two sends before the fix and one after.
+- Bind paste shortcuts to the SSH terminal receiving the event instead of global tab focus. Capture them before the native terminal handler, support physical KeyV under IME, and consume unmatched or repeated paste key releases. Reattaching the same terminal no longer stacks paste wrappers.
+
 ## 0.1.7
 
 - Handle SSH Ctrl+V / Ctrl+Shift+V through one native paste entry, preventing the hotkey and browser paste event from sending text twice. Consume handled key releases and auto-repeat without debouncing separate presses. Selection and copy shortcuts remain owned by the terminal.

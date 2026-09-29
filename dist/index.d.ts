@@ -5,8 +5,6 @@ export default class ClipboardSyncModule implements OnDestroy {
     private clipboardSync;
     private app;
     private subscriptions;
-    private pasteKeyHeld;
-    private pasteKeyEvent;
     constructor(clipboardSync: ClipboardSyncService, app: AppService);
     private initializeTabWatcher;
     private watchTabForSession;

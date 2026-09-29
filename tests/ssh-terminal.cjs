@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict')
 const fs = require('node:fs'), path = require('node:path'), Module = require('node:module'), ts = require('typescript')
+global.window = { addEventListener () {}, removeEventListener () {} }
 const file = path.resolve('src/ssh-terminal.ts')
 const loaded = new Module(file, module)
 loaded.filename = file; loaded.paths = module.paths
@@ -22,7 +23,7 @@ async function main () {
     const decorator = new loaded.exports.SSHTerminalDecorator(service, { instant: x => x })
     const paste = async () => { plain++ }
     const menu = async () => [{ label: 'Copy' }, { type: 'separator' }, { label: 'Export to file' }, { type: 'separator' }, { label: 'Paste' }]
-    const tab = { profile: { type: 'ssh' }, sshSession: {}, paste, buildContextMenu: menu }
+    const tab = { frontend: { xterm: { element: {} } }, profile: { type: 'ssh' }, sshSession: {}, paste, buildContextMenu: menu }
     decorator.attach(tab)
     await tab.paste()
     assert.equal(destination, tab); assert.equal(uploads, 1); assert.equal(plain, 0)

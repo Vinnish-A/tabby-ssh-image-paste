@@ -27,40 +27,11 @@ import { ClipboardSyncService } from './clipboard-sync.service'
 })
 export default class ClipboardSyncModule implements OnDestroy {
     private subscriptions: Subscription[] = []
-    private pasteKeyHeld = false
-    private pasteKeyEvent = (event: KeyboardEvent): void => {
-        if (event.key.toLowerCase() !== 'v') return
-        if (event.type === 'keyup') {
-            if (!this.pasteKeyHeld) return
-            this.pasteKeyHeld = false
-        } else {
-            if (!(event.target instanceof Element) || !event.target.closest('.xterm')) return
-            if (!(event.ctrlKey || event.metaKey) || event.altKey) return
-            const active = this.app.activeTab as any
-            const tab = active?.getFocusedTab?.() ?? active
-            if (tab?.profile?.type !== 'ssh') return
-            this.pasteKeyHeld = true
-            // Own this shortcut before Tabby's hotkeys AND Chromium's default
-            // paste see it. The decorated native entry handles text or images.
-            event.preventDefault()
-            event.stopImmediatePropagation()
-            if (!event.repeat) void tab.paste()
-            return
-        }
-        // xterm invokes Tabby's custom key handler on keyup as well. Do not
-        // let releasing an already handled V initiate another paste.
-        event.preventDefault()
-        event.stopImmediatePropagation()
-    }
-
-
     constructor(
         private clipboardSync: ClipboardSyncService,
         private app: AppService,
     ) {
         this.initializeTabWatcher()
-        document.addEventListener('keydown', this.pasteKeyEvent, true)
-        document.addEventListener('keyup', this.pasteKeyEvent, true)
     }
 
     private initializeTabWatcher(): void {
@@ -185,8 +156,6 @@ export default class ClipboardSyncModule implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        document.removeEventListener('keydown', this.pasteKeyEvent, true)
-        document.removeEventListener('keyup', this.pasteKeyEvent, true)
         this.subscriptions.forEach(sub => sub.unsubscribe())
     }
 }

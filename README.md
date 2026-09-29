@@ -8,7 +8,7 @@
 
 插件名：**`tabby-ssh-image-paste`**；设置页名称：**SSH Image Paste**。
 
-当前版本：**0.1.7**。尚未上架 npm / Tabby 插件商店。
+当前版本：**0.1.8**。尚未上架 npm / Tabby 插件商店。
 
 1. [下载 install.cmd](https://raw.githubusercontent.com/Vinnish-A/tabby-ssh-image-paste/main/install.cmd)，保存到电脑上（不要保存为 `.txt`）。
 2. 双击脚本，它会从 GitHub 下载已发布版本并安装；看到 `Installed tabby-ssh-image-paste ...` 即成功。
@@ -41,7 +41,7 @@
 
 已在 Windows Tabby 1.0.237 → SSH → Linux / WSL → codex24h / Codex 0.158.0 链路验证：首次连接后粘贴图片、SFTP 落盘、Codex 显示图片附件并正确回答图片颜色。另已验证无位图、仅 HTML 的“文字—图片—文字—图片—文字”剪贴板，在原生输入框显示两张附件及完整文字顺序。其他平台和版本尚未实测。
 
-0.1.7 在独立 Windows Tabby 窗口实测 30 组粘贴：纯文字、纯图片、HTML 双图混排 × Ctrl+V / Ctrl+Shift+V × 短按、长按重复、先松 Ctrl、连续两次、菜单调用。记录 SSH 发送入口，单次一份、两次两份；图片实际通过 SFTP 上传。测试拦截最终终端输入，避免把测试文字执行为 shell 命令；测试上传随后清理。
+0.1.7 的自动测试仅发送 keydown/keyup，漏掉实际操作中的 keypress，因此没有修完重复粘贴。0.1.8 补入 keypress：真实 Tabby 窗口中，旧处理稳定发送两份，新处理只发送一份；短按和稍长按均覆盖。单元回归额外覆盖读取剪贴板时同步进入 keypress、重复松键、IME 键名和多个终端的事件归属。用户在同一 Windows 诊断窗口手动复测，也确认每次只增加一条发送记录。测试只记录 SSH 发送入口，不执行测试文字。
 
 若无反应，检查剪贴板是否有图片、SSH 是否连接完成、SFTP 是否可用，以及设置中的 **SSH Image Paste** 是否启用。
 

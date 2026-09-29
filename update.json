@@ -1,8 +1,8 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.4",
   "sha256": {
-    "dist/index.js": "bf5f38712bb7811043773a126399a4d2ff2e571fc98b67c8f578c9e7a9a43785",
+    "dist/index.js": "e346b4cb9cfa06d4121cec275d74855a9cd8896dbc69d9b39467d21c16a51429",
     "LICENSE": "4dcc6a5c83f14a77d1791bdd86d41be31f461129669a24a2344d5dc0edbb8a36",
-    "package.json": "a05debf6d3cd718019f853f0de46cd7c5edb57ed829586a1814112a9f05b1b1a"
+    "package.json": "dcaaf7fcaa060cdcbb91a8dfbe3a82d231a5e97b7640dff93525aa9b1dce1263"
   }
 }

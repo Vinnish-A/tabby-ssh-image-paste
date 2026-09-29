@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Use Tabby’s browser network stack for GitHub updates so system proxy and DNS settings work on Windows.
+
 ## 0.1.3
 
 - Add a double-click Windows installer using Windows built-in tools; preserve other plugins and back up the old package.

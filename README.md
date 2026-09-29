@@ -8,10 +8,10 @@
 
 插件名：**`tabby-ssh-image-paste`**；设置页名称：**SSH Image Paste**。
 
-当前版本：**0.1.3**。尚未上架 npm / Tabby 插件商店。
+当前版本：**0.1.4**。尚未上架 npm / Tabby 插件商店。
 
 1. [下载 ZIP](https://github.com/Vinnish-A/tabby-ssh-image-paste/archive/refs/heads/main.zip)，完整解压。
-2. 双击 `install.cmd`，看到 `Installed tabby-ssh-image-paste 0.1.3` 即安装成功。
+2. 双击 `install.cmd`，看到 `Installed tabby-ssh-image-paste 0.1.4` 即安装成功。
 3. 保存工作，完全退出并重新打开 Tabby。
 
 不需要管理员权限、Node.js，也不用自己打开 PowerShell 或输入命令。安装器会调用 Windows 自带的 PowerShell；如果系统策略禁止运行脚本，需要管理员处理该策略。旧版图片插件会移到 `%APPDATA%\tabby\plugins\backups`，其他插件不受影响。

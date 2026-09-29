@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs'
-import { get } from 'https'
 import { join, resolve } from 'path'
 import { createHash } from 'crypto'
 
@@ -16,27 +15,28 @@ export function newer(candidate: string, current: string): boolean {
     for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i]
     return false
 }
-function download(url: string): Promise<Buffer> {
-    return new Promise((resolveDownload, reject) => {
-        const request = get(url, response => {
-            if (response.statusCode !== 200) {
-                response.resume()
-                reject(new Error(`Update download returned HTTP ${response.statusCode}`))
-                return
+async function download(url: string): Promise<Buffer> {
+    // Chromium's network stack honors Tabby's/system proxy and DNS settings.
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    try {
+        const response = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+        if (!response.ok || !response.body) throw new Error(`Update download returned HTTP ${response.status}`)
+        const reader = response.body.getReader()
+        const chunks: Buffer[] = []
+        let size = 0
+        for (;;) {
+            const { done, value } = await reader.read()
+            if (done) break
+            size += value.length
+            if (size > 2 * 1024 * 1024) {
+                await reader.cancel()
+                throw new Error('Update file exceeds 2 MiB')
             }
-            const chunks: Buffer[] = []
-            let size = 0
-            response.on('data', (chunk: Buffer) => {
-                size += chunk.length
-                if (size > 2 * 1024 * 1024) request.destroy(new Error('Update file exceeds 2 MiB'))
-                else chunks.push(chunk)
-            })
-            response.on('end', () => resolveDownload(Buffer.concat(chunks)))
-            response.on('error', reject)
-        })
-        request.setTimeout(10000, () => request.destroy(new Error('Update download timed out')))
-        request.on('error', reject)
-    })
+            chunks.push(Buffer.from(value))
+        }
+        return Buffer.concat(chunks)
+    } finally { clearTimeout(timeout) }
 }
 
 // Download a tagged, checksum-verified bundle before replacing any installed file.

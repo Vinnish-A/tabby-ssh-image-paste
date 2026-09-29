@@ -1,6 +1,6 @@
 {
   "name": "tabby-ssh-image-paste",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Paste clipboard images to remote SSH servers via SFTP for Tabby terminal",
   "keywords": [
     "tabby-plugin",
@@ -25,7 +25,7 @@
   },
   "author": "CoderRed",
   "scripts": {
-    "build": "webpack --mode production && node scripts/update-manifest.cjs",
+    "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
     "lint": "eslint src/**/*.ts"
   },

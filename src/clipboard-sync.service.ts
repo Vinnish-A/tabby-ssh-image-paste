@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core'
 import { Subject } from 'rxjs'
 import { ConfigService, NotificationsService } from 'tabby-core'
-import { checkForUpdate } from './update'
+import { randomUUID } from 'crypto'
+import { readParts, imagePNG, PastePart } from './clipboard-content'
 import { ClipboardSyncConfig, DEFAULT_CONFIG } from './models/config.interface'
 
 // Get Electron clipboard
-const { clipboard } = require('@electron/remote')
+const { clipboard, nativeImage } = require('@electron/remote')
 
 interface SSHSession {
     profile: {
@@ -26,6 +27,8 @@ interface SessionContext {
 export class ClipboardSyncService {
     private activeContext: SessionContext | null = null
     private config: ClipboardSyncConfig
+    private pendingParts: PastePart[] | null = null
+    private pasting = false
 
     readonly imagePasted$ = new Subject<{ path: string }>()
     readonly error$ = new Subject<{ message: string }>()
@@ -36,11 +39,6 @@ export class ClipboardSyncService {
     ) {
         const store = this.configService.store
         this.config = store?.clipboardSync ?? { ...DEFAULT_CONFIG }
-
-        if (this.config.autoUpdate !== false) {
-            void checkForUpdate(message => this.notifications.info(message))
-                .catch(error => console.warn('SSH Image Paste update check:', String(error)))
-        }
 
         this.configService.changed$.subscribe(() => {
             this.config = this.configService.store?.clipboardSync ?? { ...DEFAULT_CONFIG }
@@ -65,73 +63,49 @@ export class ClipboardSyncService {
     }
 
     canPasteImage(): boolean {
-        return this.config.enabled && this.activeContext !== null && !clipboard.readImage().isEmpty()
+        this.pendingParts = this.config.enabled && this.activeContext ? readParts(clipboard) : null
+        return !!this.pendingParts?.length
     }
 
-    /**
-     * Handle Ctrl+Shift+V - paste image from clipboard
-     * Returns true if handled (image or text pasted)
-     */
     async pasteImage(): Promise<boolean> {
         const context = this.activeContext
-        if (!context) {
-
-            return false
-        }
-
-        if (!this.config.enabled) {
-
-            return false
-        }
-
-        // Check if clipboard has image
-        const image = clipboard.readImage()
-        if (image.isEmpty()) {
-
-            return false // Let Tabby handle normal paste
-        }
-
-
-
+        if (!context || !this.config.enabled) return false
+        const parts = this.pendingParts ?? readParts(clipboard)
+        this.pendingParts = null
+        if (!parts.length) return false
+        if (this.pasting) return true
+        this.pasting = true
         try {
-            const imageData = image.toPNG()
-
-            // Send image to server
-            const filePath = await this.sendImageToServer(context, imageData)
-            
-            // Input file path to terminal
-            await this.inputToTerminal(context.tab, filePath)
-            
-            this.imagePasted$.next({ path: filePath })
-            
-            if (this.config.showNotifications) {
-                this.notifications.info(`Image uploaded: ${filePath}`)
+            const bracketed = context.tab.frontend?.supportsBracketedPaste?.()
+            if (parts.length > 1 && !bracketed) throw new Error('Mixed image/text paste requires bracketed paste. Open the Codex input first.')
+            const paths: string[] = []
+            const chunks: string[] = []
+            // Finish every upload before changing the input; a failed image must
+            // not silently leave a partially pasted document in the composer.
+            for (const part of parts) {
+                let text: string
+                if ('text' in part) {
+                    text = part.text.replace(/\r\n?/g, '\n').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+                } else {
+                    const data = 'png' in part ? part.png : await imagePNG(part.source, nativeImage)
+                    const path = `/tmp/clipboard_${randomUUID()}.png`
+                    await this.sendViaSFTP(context.tab, data, path)
+                    paths.push(path)
+                    text = `"${path}"`
+                }
+                // Separate paste events let Codex recognize each image path as
+                // an attachment while retaining text before and after it.
+                chunks.push(bracketed ? `\x1b[200~${text}\x1b[201~` : text)
             }
-
+            await this.writeToTerminal(context.tab, chunks.join(''))
+            for (const path of paths) this.imagePasted$.next({ path })
+            if (this.config.showNotifications) this.notifications.info(`${paths.length} image(s) pasted`)
             return true
-
         } catch (error) {
-
             this.error$.next({ message: String(error) })
-            this.notifications.error(`Image upload failed: ${String(error)}`)
+            this.notifications.error(`Image paste failed: ${String(error)}`)
             return false
-        }
-    }
-
-    private async sendImageToServer(context: SessionContext, imageData: Buffer): Promise<string> {
-        const timestamp = Date.now()
-        const filename = `/tmp/clipboard_${timestamp}.png`
-
-
-
-        try {
-            await this.sendViaSFTP(context.tab, imageData, filename)
-        } catch (error) {
-
-            throw error
-        }
-
-        return filename
+        } finally { this.pasting = false }
     }
 
     private async sendViaSFTP(tab: any, data: Buffer, remotePath: string): Promise<void> {
@@ -158,16 +132,6 @@ export class ClipboardSyncService {
         } finally {
             await handle.close()
         }
-    }
-
-    private async inputToTerminal(tab: any, filePath: string): Promise<void> {
-        // Just input the file path (user can use it with Claude Code / OpenCode)
-        // Wrap in quotes to prevent shell interpretation of slashes
-        let text = `"${filePath}"`
-        if (tab.frontend?.supportsBracketedPaste?.()) {
-            text = `\x1b[200~${text}\x1b[201~`
-        }
-        await this.writeToTerminal(tab, text)
     }
 
     private async writeToTerminal(tab: any, text: string): Promise<void> {

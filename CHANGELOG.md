@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Paste mixed HTML text and multiple images in document order, retaining paragraphs and separate Codex image attachments; show failures without partially inserting the document.
+- Remove startup update checks and the automatic-update setting. A standalone Windows install.cmd downloads and installs the published tag only when explicitly run; reuse the same script for later updates.
+
 ## 0.1.4
 
 - Use Tabby’s browser network stack for GitHub updates so system proxy and DNS settings work on Windows.

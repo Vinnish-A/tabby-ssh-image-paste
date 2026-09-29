@@ -2,7 +2,6 @@ import { Component } from '@angular/core'
 import { ConfigService } from 'tabby-core'
 
 interface ClipboardSyncConfig {
-    autoUpdate: boolean
     enabled: boolean
     showNotifications: boolean
 }
@@ -33,13 +32,6 @@ interface ClipboardSyncConfig {
         </div>
 
         <div class="form-group">
-            <label><input type="checkbox" [(ngModel)]="config.autoUpdate" (ngModelChange)="save()" />
-                Automatically update from GitHub on startup (at most once a day)
-            </label>
-            <small class="form-text text-muted">Updates apply to newly opened windows. Existing SSH sessions are not restarted.</small>
-        </div>
-
-        <div class="form-group">
             <div class="form-check">
                 <input
                     type="checkbox"
@@ -64,7 +56,6 @@ export class ClipboardSyncSettingsTabComponent {
 
     private getDefaultConfig(): ClipboardSyncConfig {
         return {
-            autoUpdate: true,
             enabled: true,
             showNotifications: true,
         }

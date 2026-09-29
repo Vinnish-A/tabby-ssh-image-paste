@@ -14,6 +14,8 @@ export declare class ClipboardSyncService {
     private notifications;
     private activeContext;
     private config;
+    private pendingParts;
+    private pasting;
     readonly imagePasted$: Subject<{
         path: string;
     }>;
@@ -28,14 +30,8 @@ export declare class ClipboardSyncService {
     clearActiveSession(): void;
     hasActiveSession(): boolean;
     canPasteImage(): boolean;
-    /**
-     * Handle Ctrl+Shift+V - paste image from clipboard
-     * Returns true if handled (image or text pasted)
-     */
     pasteImage(): Promise<boolean>;
-    private sendImageToServer;
     private sendViaSFTP;
-    private inputToTerminal;
     private writeToTerminal;
 }
 export {};

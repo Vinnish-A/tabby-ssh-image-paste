@@ -5,6 +5,7 @@ const Module = require('node:module')
 const ts = require('typescript')
 const { Subject } = require('rxjs')
 let image = true
+let rich = null
 const clipboard = { readImage: () => ({ isEmpty: () => !image, toPNG: () => Buffer.from('PNG') }) }
 const file = require('node:path').resolve('src/clipboard-sync.service.ts')
 const moduleUnderTest = new Module(file, module)
@@ -12,7 +13,7 @@ moduleUnderTest.filename = file
 moduleUnderTest.paths = module.paths
 const normalRequire = moduleUnderTest.require.bind(moduleUnderTest)
 moduleUnderTest.require = name => {
-    if (name === './update') return { checkForUpdate: async () => {} }
+    if (name === './clipboard-content') return { readParts: () => rich ?? (image ? [{ png: Buffer.from('PNG') }] : []) }
     if (name === '@angular/core') return { Injectable: () => target => target }
     if (name === '@electron/remote') return { clipboard }
     if (name === 'tabby-core') return {}
@@ -36,7 +37,7 @@ async function main () {
     service.setActiveSession({}, { sendInput: x => other.push(x) })
     finish()
     assert.equal(await pending, true)
-    assert.match(sent[0], /^\x1b\[200~"\/tmp\/clipboard_\d+\.png"\x1b\[201~$/)
+    assert.match(sent[0], /^\x1b\[200~"\/tmp\/clipboard_[a-f0-9-]+\.png"\x1b\[201~$/)
     assert.deepEqual(other, [], 'focus change must not route the path into another server')
     service.sendViaSFTP = async () => { throw new Error('SFTP permission denied') }
     assert.equal(await service.pasteImage(), false)
@@ -44,6 +45,26 @@ async function main () {
     image = false
     assert.equal(service.canPasteImage(), false)
     assert.equal(await service.pasteImage(), false)
+    image = true
+    service.setActiveSession({}, tab)
+    sent.length = 0
+    const uploads = []
+    service.sendViaSFTP = async (_, data, path) => uploads.push({ data: data.toString(), path })
+    rich = [{ text: 'before\n' }, { png: Buffer.from('one') }, { text: '\nbetween\n' }, { png: Buffer.from('two') }, { text: '\nafter' }]
+    assert.equal(service.canPasteImage(), true)
+    rich = [{ text: 'clipboard changed during upload' }]
+    assert.equal(await service.pasteImage(), true)
+    assert.deepEqual(uploads.map(x => x.data), ['one', 'two'])
+    assert.notEqual(uploads[0].path, uploads[1].path)
+    const events = [...sent[0].matchAll(/\x1b\[200~([\s\S]*?)\x1b\[201~/g)].map(x => x[1])
+    assert.deepEqual(events, ['before\n', `"${uploads[0].path}"`, '\nbetween\n', `"${uploads[1].path}"`, '\nafter'])
+    sent.length = 0
+    rich = [{ png: Buffer.from('one') }, { png: Buffer.from('two') }]
+    let count = 0
+    service.sendViaSFTP = async () => { if (++count === 2) throw new Error('second image failed') }
+    assert.equal(await service.pasteImage(), false)
+    assert.deepEqual(sent, [], 'a failed document must not be partly inserted')
+    console.log('PASS: mixed order, newlines, clipboard snapshot, unique paths, no partial paste')
     console.log('PASS: bracketed paste, original destination, visible upload errors, text-only passthrough')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

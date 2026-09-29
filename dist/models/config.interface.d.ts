@@ -1,5 +1,4 @@
 export interface ClipboardSyncConfig {
-    autoUpdate: boolean;
     enabled: boolean;
     showNotifications: boolean;
 }

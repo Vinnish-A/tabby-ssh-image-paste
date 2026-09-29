@@ -1,6 +1,5 @@
 import { ConfigService } from 'tabby-core';
 interface ClipboardSyncConfig {
-    autoUpdate: boolean;
     enabled: boolean;
     showNotifications: boolean;
 }

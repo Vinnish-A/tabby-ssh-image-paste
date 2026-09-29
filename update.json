@@ -1,8 +1,0 @@
-{
-  "version": "0.1.4",
-  "sha256": {
-    "dist/index.js": "e346b4cb9cfa06d4121cec275d74855a9cd8896dbc69d9b39467d21c16a51429",
-    "LICENSE": "4dcc6a5c83f14a77d1791bdd86d41be31f461129669a24a2344d5dc0edbb8a36",
-    "package.json": "dcaaf7fcaa060cdcbb91a8dfbe3a82d231a5e97b7640dff93525aa9b1dce1263"
-  }
-}

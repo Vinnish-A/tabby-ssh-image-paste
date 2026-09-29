@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- Handle SSH Ctrl+V / Ctrl+Shift+V through one native paste entry, preventing the hotkey and browser paste event from sending text twice. Consume handled key releases and auto-repeat without debouncing separate presses. Selection and copy shortcuts remain owned by the terminal.
+
 ## 0.1.6
 
 - Route context-menu and custom-hotkey pastes through Tabby’s own paste method, avoiding duplicate text; image shortcut capture is limited to the terminal.

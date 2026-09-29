@@ -8,7 +8,7 @@
 
 插件名：**`tabby-ssh-image-paste`**；设置页名称：**SSH Image Paste**。
 
-当前版本：**0.1.6**。尚未上架 npm / Tabby 插件商店。
+当前版本：**0.1.7**。尚未上架 npm / Tabby 插件商店。
 
 1. [下载 install.cmd](https://raw.githubusercontent.com/Vinnish-A/tabby-ssh-image-paste/main/install.cmd)，保存到电脑上（不要保存为 `.txt`）。
 2. 双击脚本，它会从 GitHub 下载已发布版本并安装；看到 `Installed tabby-ssh-image-paste ...` 即成功。
@@ -41,6 +41,8 @@
 
 已在 Windows Tabby 1.0.237 → SSH → Linux / WSL → codex24h / Codex 0.158.0 链路验证：首次连接后粘贴图片、SFTP 落盘、Codex 显示图片附件并正确回答图片颜色。另已验证无位图、仅 HTML 的“文字—图片—文字—图片—文字”剪贴板，在原生输入框显示两张附件及完整文字顺序。其他平台和版本尚未实测。
 
+0.1.7 在独立 Windows Tabby 窗口实测 30 组粘贴：纯文字、纯图片、HTML 双图混排 × Ctrl+V / Ctrl+Shift+V × 短按、长按重复、先松 Ctrl、连续两次、菜单调用。记录 SSH 发送入口，单次一份、两次两份；图片实际通过 SFTP 上传。测试拦截最终终端输入，避免把测试文字执行为 shell 命令；测试上传随后清理。
+
 若无反应，检查剪贴板是否有图片、SSH 是否连接完成、SFTP 是否可用，以及设置中的 **SSH Image Paste** 是否启用。
 
 ## 开发
@@ -52,7 +54,7 @@ npm run build
 
 更新源码后请一并提交 `dist/`。发布时将 package.json 对应的 `v版本号` tag 与 main 一起推送；安装脚本从该 tag 获取文件，不要修改已发布的 tag。
 
-`node tests/ssh-terminal.cjs` 验证原生粘贴入口和 SSH 菜单过滤；`node tests/paste.cjs` 验证粘贴顺序、剪贴板快照、上传失败和原标签页输入。`tests/rich.cjs` 在 Tabby renderer 中运行，使用真实 DOM 和 Electron 图片解码器验证图文解析。
+`node tests/shortcuts.cjs` 验证一次按键只粘贴一次、松键/自动重复不重发、连续按键与复制快捷键不受影响；`node tests/ssh-terminal.cjs` 验证原生粘贴入口和 SSH 菜单过滤；`node tests/paste.cjs` 验证粘贴顺序、剪贴板快照、上传失败和原标签页输入。`tests/rich.cjs` 在 Tabby renderer 中运行，使用真实 DOM 和 Electron 图片解码器验证图文解析。
 
 ## 版权
 
